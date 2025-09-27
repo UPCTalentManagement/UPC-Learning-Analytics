@@ -101,41 +101,7 @@
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        /* 
-        #################################
-        */
-        .filter-gridn {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
 
-        .filter-groupn {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .filter-groupn label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #555;
-        }
-
-        .filter-groupn select {
-            padding: 10px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            transition: border-color 0.3s;
-        }
-
-        .filter-groupn select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        /* ################################ */
         .metrics {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -309,8 +275,8 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>UPC LMS Learning Analytics Dashboard</h1>
-            <h2>Monitor Course performance across all Cities, Districts and Supervisors</h2>
+            <h1>UPC LMS Learning Analytics Dashboard</h1> 
+            <p>Monitor Course performance across all Cities, Districts and Supervisors</p>
         </div>
 
         <!-- Filters -->
@@ -345,35 +311,6 @@
                         <option value="Completed">Completed</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Not Completed">Not Completed</option>
-                    </select>
-                </div>
-            </div>
-            <div class="filter-gridn">
-                <div class="filter-groupn">
-                    <label for="cityFiltern">City</label>
-                    <select id="cityFiltern">
-                        <option value="">All Cities</option>
-                    </select>
-                </div>
-                <div class="filter-groupn">
-                    <label for="districtFiltern">District</label>
-                    <select id="districtFiltern">
-                        <option value="">All Districts</option>
-                    </select>
-                </div>
-                <div class="filter-groupn">
-                    <label for="supervisorFiltern">Supervisor</label>
-                    <select id="supervisorFiltern">
-                        <option value="">All Supervisors</option>
-                    </select>
-                </div>
-                <div class="filter-groupn">
-                    <label for="statusFiltern">Status</label>
-                    <select id="statusFiltern">
-                        <option value="">All Status</option>
-                        <option value="Completedn">Completed</option>
-                        <option value="In Progressn">In Progress</option>
-                        <option value="Not Completedn">Not Completed</option>
                     </select>
                 </div>
             </div>
@@ -441,16 +378,10 @@
             </div>
 
             <div class="chart-container">
-                <h3>📅 Completions Trend</h3>
+                <h3>📅 Completions Over Time</h3>
                 <div class="chart-wrapper">
                     <canvas id="timelineChart"></canvas>
                 </div>
-            </div>
-        </div>
-        <div class="chart-container">
-            <h3>🔄 Compare Compeletion rate of Selected</h3>
-            <div class="chart-wrapper">
-                <canvas id="compareChart"></canvas>
             </div>
         </div>
 
@@ -506,6 +437,7 @@
 
         
         function loadDataFromAppScript() {
+            
             const webAppUrl = 'https://script.google.com/macros/s/AKfycbwRqbscTozKWki_AhHrtXfKCP2CamSas5gw3HT4BerEzG_yCQ8XzkrXQameHn9edKDx/exec';
             
             fetch(webAppUrl + '?action=getAllData')
@@ -577,9 +509,6 @@
             populateSelect('cityFilter', cities);
             populateSelect('districtFilter', districts);
             populateSelect('supervisorFilter', supervisors);
-            populateSelect('cityFiltern', cities);
-            populateSelect('districtFiltern', districts);
-            populateSelect('supervisorFiltern', supervisors);
         }
 
         function populateSelect(selectId, options) {
@@ -650,26 +579,27 @@
             initializeCharts();
         }
 
-
         function createDistrictBarChart() {
             const ctx = document.getElementById('districtBarChart').getContext('2d');
 
-            // Show only 3 districts
+            // Ensure we only show data for exactly 3 districts
             const districtData = overviewData.slice(0, 3);
-            const labels = districtData.map(item => item.supervisor);
-
-            const completedPercentages = districtData.map(item =>
-                item.total > 0 ? Number(((item.completed / item.total) * 100).toFixed(2)) : 0
-            );
+            console.log(districtData);
+            console.log(overviewData);
 
             charts.districtBar = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: districtData.map(item => item.supervisor),
                     datasets: [{
-                        label: 'Completion %',
-                        data: completedPercentages,
+                        label: 'Completed',
+                        data: districtData.map(item => item.completed),
                         backgroundColor: '#10B981',
+                        borderRadius: 5
+                    }, {
+                        label: 'Total',
+                        data: districtData.map(item => item.total),
+                        backgroundColor: '#E5E7EB',
                         borderRadius: 5
                     }]
                 },
@@ -677,160 +607,27 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return context.parsed.y.toFixed(2) + '%';
-                                }
-                            }
+                        legend: {
+                            position: 'top'
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            },
-                            grid: { color: '#f3f4f6' }
+                            grid: {
+                                color: '#f3f4f6'
+                            }
                         },
-                        x: { grid: { display: false } }
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
                 }
             });
         }
 
-        // function createDistrictBarChart() {
-        //     const ctx = document.getElementById('districtBarChart').getContext('2d');
-
-        //     // Ensure we only show data for exactly 3 districts
-        //     const districtData = overviewData.slice(0, 3);
-        //     const labels = districtData.map(item => item.supervisor);
-        //     const completedPercentages = districtData.map(item => 
-        //         ((item.completed / item.total) * 100).toFixed(2)
-        //     );
-        //     console.log('District Data:', districtData);    
-        //     console.log('Labels:', labels);
-        //     console.log('Completed Percentages:', completedPercentages);
-
-        //     charts.districtBar = new Chart(ctx, {
-        //         type: 'bar',
-        //         data: {
-        //             labels: labels,
-        //             datasets: [{
-        //                 label: 'Completion %',
-        //                 data: completedPercentages,
-        //                 backgroundColor: '#10B981',
-        //                 borderRadius: 5
-        //             }]
-        //         },
-        //         options: {
-        //             responsive: true,
-        //             maintainAspectRatio: false,
-        //             plugins: {
-        //                 legend: { position: 'top' },
-        //                 tooltip: {
-        //                     callbacks: {
-        //                         label: function (context) {
-        //                             return context.raw + '%'; // show % in tooltip
-        //                         }
-        //                     }
-        //                 }
-        //             },
-        //             scales: {
-        //                 y: {
-        //                     beginAtZero: true,
-        //                     max: 100, // because we’re showing percentages
-        //                     ticks: {
-        //                         callback: function(value) {
-        //                             return value + '%';
-        //                         }
-        //                     },
-        //                     grid: { color: '#f3f4f6' }
-        //                 },
-        //                 x: { grid: { display: false } }
-        //             }
-        //         }
-        //     });
-
-            // charts.districtBar = new Chart(ctx, {
-            //     type: 'bar',
-            //     data: {
-            //         labels: districtData.map(item => item.supervisor),
-            //         datasets: [{
-            //             label: 'Completed',
-            //             data: districtData.map(item => item.completed),
-            //             backgroundColor: '#10B981',
-            //             borderRadius: 5
-            //         }, {
-            //             label: 'Total',
-            //             data: districtData.map(item => item.total),
-            //             backgroundColor: '#E5E7EB',
-            //             borderRadius: 5
-            //         }]
-            //     },
-            //     options: {
-            //         responsive: true,
-            //         maintainAspectRatio: false,
-            //         plugins: {
-            //             legend: {
-            //                 position: 'top'
-            //             }
-            //         },
-            //         scales: {
-            //             y: {
-            //                 beginAtZero: true,
-            //                 grid: {
-            //                     color: '#f3f4f6'
-            //                 }
-            //             },
-            //             x: {
-            //                 grid: {
-            //                     display: false
-            //                 }
-            //             }
-            //         }
-            //     }
-            // });
-        //}
-
-        // function createStatusPieChart() {
-        //     const ctx = document.getElementById('statusPieChart').getContext('2d');
-        //     const statusCounts = {
-        //         'Completed': currentData.filter(item => item.status === 'Completed').length,
-        //         'In Progress': currentData.filter(item => item.status === 'In Progress').length,
-        //         'Not Completed': currentData.filter(item => item.status === 'Not Completed').length
-        //     };
-
-        //     charts.statusPie = new Chart(ctx, {
-        //         type: 'pie',
-        //         data: {
-        //             labels: Object.keys(statusCounts),
-        //             datasets: [{
-        //                 data: Object.values(statusCounts),
-        //                 backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
-        //                 borderWidth: 2,
-        //                 borderColor: '#ffffff'
-        //             }]
-        //         },
-        //         options: {
-        //             responsive: true,
-        //             maintainAspectRatio: false,
-        //             plugins: {
-        //                 legend: {
-        //                     position: 'bottom',
-        //                     labels: {
-        //                         padding: 20,
-        //                         usePointStyle: true
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     });
-        // }
         function createStatusPieChart() {
             const ctx = document.getElementById('statusPieChart').getContext('2d');
             const statusCounts = {
@@ -838,8 +635,6 @@
                 'In Progress': currentData.filter(item => item.status === 'In Progress').length,
                 'Not Completed': currentData.filter(item => item.status === 'Not Completed').length
             };
-
-            const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
             charts.statusPie = new Chart(ctx, {
                 type: 'pie',
@@ -862,34 +657,10 @@
                                 padding: 20,
                                 usePointStyle: true
                             }
-                        },
-                        datalabels: {
-                            formatter: (value) => {
-                                let percentage = (value / total * 100).toFixed(1) + '%';
-                                return percentage;
-                            },
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 14
-                            }
-                        }
-                    }
-                },
-                // plugins: [ChartDataLabels], // activate the plugin
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let value = context.raw;
-                                let percentage = (value / total * 100).toFixed(1) + '%';
-                                return context.label + ': ' + percentage;
-                            }
                         }
                     }
                 }
             });
-            // addPercentageToLegend(charts.statusPie);
         }
 
         function createDistrictBarChart() {
@@ -969,7 +740,6 @@
                     }
                 }
             });
-            // addPercentageToLegend(charts.cityPie);
         }
 
         function createSupervisorPieChart() {
@@ -1008,8 +778,6 @@
                     }
                 }
             });
-
-            // addPercentageToLegend(charts.supervisorPie);
         }
 
         function createStatusDistributionChart() {
@@ -1147,100 +915,6 @@
                 `;
             });
         }
-        ['cityFiltern','districtFiltern','supervisorFiltern','statusFiltern'].forEach(id=>{
-        document.getElementById(id).addEventListener('change', applyCompare);
-        });
-
-        function applyCompare() {
-        const cityA = document.getElementById('cityFilter').value;
-        const cityB = document.getElementById('cityFiltern').value;
-        const districtA = document.getElementById('districtFilter').value;
-        const districtB = document.getElementById('districtFiltern').value;
-        const supervisorA = document.getElementById('supervisorFilter').value;
-        const supervisorB = document.getElementById('supervisorFiltern').value;
-
-        let groupA = completedRateData.filter(item =>
-            (!cityA || item.city === cityA) &&
-            (!districtA || item.district === districtA) &&
-            (!supervisorA || item.supervisor === supervisorA)
-        );
-
-        let groupB = completedRateData.filter(item =>
-            (!cityB || item.city === cityB) &&
-            (!districtB || item.district === districtB) &&
-            (!supervisorB || item.supervisor === supervisorB)
-        );
-
-        // Calculate completion % for each group
-        const calcRate = (arr) => {
-            if (arr.length === 0) return 0;
-            const completed = arr.filter(i => i.status === "Completed").length;
-            return ((completed / arr.length) * 100).toFixed(1);
-        };
-
-        const rateA = calcRate(groupA);
-        const rateB = calcRate(groupB);
-
-        // Destroy old chart if exists
-        if (charts.compareChart) charts.compareChart.destroy();
-
-        const ctx = document.getElementById('compareChart').getContext('2d');
-        charts.compareChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-            labels: ['Completion %'],
-            datasets: [
-                {
-                label: cityA || districtA || supervisorA || "Group A",
-                data: [rateA],
-                backgroundColor: '#3B82F6'
-                },
-                {
-                label: cityB || districtB || supervisorB || "Group B",
-                data: [rateB],
-                backgroundColor: '#F59E0B'
-                }
-            ]
-            },
-            options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                callbacks: {
-                    label: function(context) {
-                    return context.dataset.label + ": " + context.raw + "%";
-                    }
-                }
-                },
-                legend: { position: 'bottom' }
-            },
-            scales: {
-                y: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: (val)=> val + "%"
-                }
-                }
-            }
-            }
-        });
-        }
-        function addPercentageToLegend(chart) {
-            const total = chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-            chart.options.plugins.legend.labels.generateLabels = (chartInstance)=>{
-                const labels = Chart.defaults.plugins.legend.labels.generateLabels(chartInstance);
-                labels.forEach((label,i)=>{
-                const value = chart.data.datasets[0].data[i];
-                const percent = ((value/total)*100).toFixed(1)+"%";
-                label.text = chart.data.labels[i] + " (" + percent + ")";
-                });
-                return labels;
-            };
-            chart.update();
-            }
-
     </script>
 </body>
 </html>
